@@ -1,0 +1,24 @@
+version: '3.8'
+
+volumes:
+  db-init:
+  db-data:
+
+services:
+  db:
+    build: .
+    container_name: react-echo-db
+    restart: on-failure:5
+    ports:
+      - '3330:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+    tty: true
+    volumes:
+      - db-init:/docker-entrypoint-initdb.d
+      - db-data:/var/lib/mysql
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --skip-character-set-client-handshake
+    networks:
+      - react-echo-sample
+networks:
+  react-echo-sample:

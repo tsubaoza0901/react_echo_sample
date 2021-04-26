@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: react-echo-backend
+    volumes:
+      - '.:/go/app'
+    ports:
+      - '9090:9090'
+    tty: true
+    stdin_open: true
+    networks:
+      - database_react-echo-sample
+networks:
+  database_react-echo-sample:
+    external: true
