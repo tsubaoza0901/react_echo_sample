@@ -10,6 +10,11 @@ services:
       - '9090:9090'
     tty: true
     stdin_open: true
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     networks:
       - database_react-echo-sample
 networks:
