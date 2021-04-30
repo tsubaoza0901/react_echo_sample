@@ -2,5 +2,5 @@ package response
 
 // Jwt ...
 type Jwt struct {
-	Token string
+	Token string `json:"token"`
 }

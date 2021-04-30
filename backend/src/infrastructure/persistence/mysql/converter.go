@@ -13,8 +13,8 @@ func convertCreateUserInputToRdb(input *model.User) *rdb.User {
 		LastName:  input.LastName,
 		FirstName: input.FirstName,
 		UserName:  input.UserName,
-		Password:  input.Password,
 		Email:     input.Email,
+		Password:  input.Password,
 	}
 }
 
@@ -26,8 +26,8 @@ func convertRdbUserModelToDomain(input *rdb.User) *model.User {
 		LastName:  input.LastName,
 		FirstName: input.FirstName,
 		UserName:  input.UserName,
-		Password:  input.Password,
 		Email:     input.Email,
+		Password:  input.Password,
 	}
 }
 
@@ -43,4 +43,13 @@ func convertUpdateUserInputToRdb(input *model.User) *rdb.User {
 		Email:     input.Email,
 		Password:  input.Password,
 	}
+}
+
+// Users
+func convertRdbUserModelsToDomains(usersRdb []*rdb.User) []*model.User {
+	users := make([]*model.User, len(usersRdb))
+	for i, v := range usersRdb {
+		users[i] = convertRdbUserModelToDomain(v)
+	}
+	return users
 }

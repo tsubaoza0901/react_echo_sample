@@ -13,10 +13,8 @@ import (
 )
 
 // userRepository userRepository構造体
-// 役割：
 type userRepository struct {
 	DBConn *gorm.DB // トランザクションを使用しない場合
-	// transaction.ManageTransaction          // トランザクションを使用する場合
 }
 
 // NewUserRepository NewUserRepository関数
@@ -27,25 +25,25 @@ func NewUserRepository(DBConn *gorm.DB) gateway.UserRepositoryAccess {
 
 // FetchByID FetchByIDメソッド
 // 役割：指定されたIDに対応する単一レコードの取得
-func (r *userRepository) FetchByID(ctx context.Context, id uint) (*model.User, error) {
-	return r.fetchByID(id)
+func (r *userRepository) FetchByID(ctx context.Context, id uint, demandPW bool) (*model.User, error) {
+	return r.fetchByID(id, demandPW)
 }
 
 // fetchByID FetchByIDの実体
 // 役割：
-func (r *userRepository) fetchByID(id uint) (*model.User, error) {
+func (r *userRepository) fetchByID(id uint, demandPW bool) (*model.User, error) {
 	db := r.DBConn
 
 	user := &rdb.User{}
-	if err := db.Debug().Where("id = ?", id).First(user).
-		Preload("Jobs").
-		Preload("Jobs.ProgramingLanguages").
-		Preload("Jobs.ProgramingFrameworks").
-		Preload("Jobs.Skills").
-		Preload("ProgramingLanguages").
-		Preload("ProgramingFrameworks").
-		Preload("Skills").
+	if !demandPW {
+		// PWが必要な場合以外、PWの抽出は省略
+		db = db.Omit("password")
+	}
+	if err := db.Debug().
+		Where("id = ?", id).First(user).
 		Error; err != nil {
+		db.Rollback()
+		err = conf.NewAppError(conf.ErrFailedToServer, errors.Wrap(err, "failed to fetch user"))
 		return nil, err
 	}
 
@@ -55,43 +53,37 @@ func (r *userRepository) fetchByID(id uint) (*model.User, error) {
 // FetchByLoginInfo FetchByLoginInfoメソッド
 // 役割：指定されたIDに対応する単一レコードの取得
 func (r *userRepository) FetchByLoginInfo(ctx context.Context, loginInfo *model.User) (*model.User, error) {
-	tx, _ := transaction.WithContext(ctx)
+	db := r.DBConn
 
 	user := &rdb.User{}
-	if err := tx.Debug().Where("email = ? AND password = ?", loginInfo.Email, loginInfo.Password).First(user).
+	if err := db.Debug().Where("email = ? AND password = ?", loginInfo.Email, loginInfo.Password).First(user).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
+		db.Rollback()
+		err = conf.NewAppError(conf.ErrFailedToServer, errors.Wrap(err, "failed to fetch user"))
 		return nil, err
 	}
 
 	return convertRdbUserModelToDomain(user), nil
 }
 
-// func (r *userRepository) Search(ctx context.Context, userSearchInputData *iodata.UserSearchInputData) ([]*model.User, error) {
-// 	tx := r.ManageTransaction.Begin()
+func (r *userRepository) Search(ctx context.Context) ([]*model.User, error) {
+	db := r.DBConn
 
-// 	users := []*rdb.User{}
+	users := []*rdb.User{}
 
-// 	if err := tx.Debug().
-// 		Preload("Jobs").
-// 		Preload("Jobs.ProgramingLanguages").
-// 		Preload("Jobs.ProgramingFrameworks").
-// 		Preload("Jobs.Skills").
-// 		Preload("ProgramingLanguages").
-// 		Preload("ProgramingFrameworks").
-// 		Preload("Skills").
-// 		Find(&users).
-// 		Error; err != nil {
-// 		tx.Rollback()
-// 		err = conf.NewAppError(conf.ErrFailedToServer, errors.Wrap(err, "failed to users"))
-// 		return nil, errors.WithStack(err)
-// 	}
-// 	tx.Debug().Commit()
+	db = db.Select("id", "updated_at", "last_name", "first_name", "user_name", "email")
+	if err := db.Debug().Find(&users).
+		Error; err != nil {
+		db.Rollback()
+		err = conf.NewAppError(conf.ErrFailedToServer, errors.Wrap(err, "failed to search users"))
+		return nil, errors.WithStack(err)
+	}
 
-// 	return convertUserRdbModelsToDomainModels(users), nil
-// }
+	return convertRdbUserModelsToDomains(users), nil
+}
 
 func (r *userRepository) TxCreate(ctx context.Context, createUserInput *model.User) (uint, error) {
 	tx, _ := transaction.WithContext(ctx)
@@ -126,25 +118,23 @@ func (r *userRepository) TxUpdate(ctx context.Context, updateUserInput *model.Us
 	return nil
 }
 
-// func (r *userRepository) TxDelete(ctx context.Context, userDeleteInputData *iodata.UserDeleteInputData) error {
-// 	tx := r.ManageTransaction.Begin()
+func (r *userRepository) TxDelete(ctx context.Context, deleteUserInput *model.User) error {
+	tx, _ := transaction.WithContext(ctx)
 
-// 	result := tx.Debug().
-// 		Where("id = ? AND updated_at = ?", userDeleteInputData.ID, userDeleteInputData.UpdatedAt).
-// 		Delete(&rdb.User{})
+	result := tx.Debug().Where("id = ? AND updated_at = ?", deleteUserInput.ID, deleteUserInput.UpdatedAt).Delete(&rdb.User{})
 
-// 	err := result.Error
-// 	if err != nil {
-// 		tx.Rollback()
-// 		err := conf.NewAppError(conf.ErrFailedToServer, errors.Wrap(err, "failed to delete user"))
-// 		return errors.WithStack(err)
-// 	}
-// 	// 対象のレコードが見つからなかった場合のエラーハンドリング
-// 	if result.RowsAffected == 0 {
-// 		tx.Rollback()
-// 		err := conf.NewAppError(conf.ErrFailedToServer, errors.New("failed to delete user"))
-// 		return errors.WithStack(err)
-// 	}
-// 	tx.Commit()
-// 	return nil
-// }
+	err := result.Error
+	if err != nil {
+		tx.Rollback()
+		err := conf.NewAppError(conf.ErrFailedToServer, errors.Wrap(err, "failed to delete user"))
+		return errors.WithStack(err)
+	}
+	// 対象のレコードが見つからなかった場合のエラーハンドリング
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		err := conf.NewAppError(conf.ErrFailedToServer, errors.New("failed to delete user"))
+		return errors.WithStack(err)
+	}
+
+	return nil
+}

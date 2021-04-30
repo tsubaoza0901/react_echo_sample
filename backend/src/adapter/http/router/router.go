@@ -28,8 +28,8 @@ func InitRouting(e *echo.Echo, h handler.AppHandler) {
 	auth.Use(middleware.JWTWithConfig(Config))
 
 	// User
-	// e.GET(apiBaseURL+"user/:id", h.GetUser)
-	// e.GET(apiBaseURL+"users", h.GetUsers)
+	e.GET(apiBaseURL+"user/:id", h.GetUser)
+	e.GET(apiBaseURL+"users", h.GetUsers)
 	auth.PUT(apiBaseURL+"user/:id", h.UpdateUser)
-	// e.DELETE(apiBaseURL+"user/:id", h.DeleteUser)
+	auth.DELETE(apiBaseURL+"user/:id", h.DeleteUser)
 }
