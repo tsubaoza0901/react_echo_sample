@@ -74,7 +74,9 @@ func (r *userRepository) Search(ctx context.Context) ([]*model.User, error) {
 
 	users := []*rdb.User{}
 
-	db = db.Select("id", "updated_at", "last_name", "first_name", "user_name", "email")
+	// PWの抽出は省略
+	db = db.Omit("password")
+
 	if err := db.Debug().Find(&users).
 		Error; err != nil {
 		db.Rollback()
