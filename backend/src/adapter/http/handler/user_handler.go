@@ -168,7 +168,7 @@ func (h *userHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusOK, response.NewAPIResponse(conf.ErrBadRequest, err.Error(), nil))
 	}
 
-	inputdata := &model.User{
+	input := &model.User{
 		ID:        uint(id),
 		UpdatedAt: updatedAt,
 		LastName:  req.LastName,
@@ -178,7 +178,7 @@ func (h *userHandler) UpdateUser(c echo.Context) error {
 		Password:  req.Password,
 	}
 
-	if err := h.UserUseCase.UpdateUser(ctx, inputdata); err != nil {
+	if err := h.UserUseCase.UpdateUser(ctx, input); err != nil {
 		// zap.S().Errorw("update error", zap.Error(err))
 		code := conf.ErrFailedToServer
 		if apperr, ok := errors.Cause(err).(*conf.AppError); ok {
