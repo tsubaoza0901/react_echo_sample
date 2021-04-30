@@ -36,7 +36,7 @@ func NewUserHandler(u usecase.UserUseCase) UserHandler {
 }
 
 // GetUser GetUserメソッド
-// 役割：userの取得
+// 役割：単一userの取得
 // @Resource /v1/user
 // @Router /api/v1/user/{id} [get]
 func (h *userHandler) GetUser(c echo.Context) error {
@@ -85,7 +85,7 @@ func (h *userHandler) GetUser(c echo.Context) error {
 }
 
 // // GetUsers GetUsersメソッド
-// 役割：userの全取得
+// 役割：条件に合うuserの全取得
 // @Resource /v1/users
 // @Router /api/v1/users [get]
 func (h *userHandler) GetUsers(c echo.Context) error {
@@ -112,7 +112,6 @@ func (h *userHandler) GetUsers(c echo.Context) error {
 	// 	ID: req.ID,
 	// }
 
-	// 複数案件の取得
 	users, err := h.UserUseCase.GetUsers(ctx)
 	if err != nil {
 		// zap.S().Errorw("gets error", zap.Error(err))
@@ -129,7 +128,7 @@ func (h *userHandler) GetUsers(c echo.Context) error {
 }
 
 // UpdateUser ...
-// 役割：userの登録
+// 役割：userの更新
 // @Resource /v1/user
 // @Router /auth/api/v1/user [put]
 func (h *userHandler) UpdateUser(c echo.Context) error {

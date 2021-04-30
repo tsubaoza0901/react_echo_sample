@@ -12,6 +12,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 )
 
 // AuthHandler AuthHandler interface
@@ -43,7 +44,7 @@ func (h *authHandler) Signup(c echo.Context) error {
 	req := &request.SignupInfo{}
 	if err := c.Bind(req); err != nil {
 		// zap.S().Errorw("failed to bind", zap.Error(err))
-		// err = conf.NewAppError(conf.ErrBadRequest, err).Wrap()
+		err = conf.NewAppError(conf.ErrBadRequest, err).Wrap()
 		return c.JSON(http.StatusOK, response.NewAPIResponse(conf.ErrBadRequest, err.Error(), nil))
 	}
 
@@ -66,12 +67,12 @@ func (h *authHandler) Signup(c echo.Context) error {
 	if err != nil {
 		// zap.S().Errorw("create error", zap.Error(err))
 		code := conf.ErrFailedToServer
-		// if apperr, ok := errors.Cause(err).(*conf.AppError); ok {
-		// 	code = apperr.Code
-		// 	err = apperr.Wrap()
-		// } else {
-		// 	err = conf.NewAppError(conf.ErrFailedToServer, err).Wrap()
-		// }
+		if apperr, ok := errors.Cause(err).(*conf.AppError); ok {
+			code = apperr.Code
+			err = apperr.Wrap()
+		} else {
+			err = conf.NewAppError(conf.ErrFailedToServer, err).Wrap()
+		}
 		return c.JSON(http.StatusOK, response.NewAPIResponse(code, err.Error(), nil))
 	}
 
@@ -82,7 +83,7 @@ func (h *authHandler) Signup(c echo.Context) error {
 }
 
 // Login ...
-// 役割：userの登録
+// 役割：ログイン
 // @Resource /v1/login
 // @Router api/v1/login [post]
 func (h *authHandler) Login(c echo.Context) error {
@@ -92,7 +93,7 @@ func (h *authHandler) Login(c echo.Context) error {
 	req := &request.LoginInfo{}
 	if err := c.Bind(req); err != nil {
 		// zap.S().Errorw("failed to bind", zap.Error(err))
-		// err = conf.NewAppError(conf.ErrBadRequest, err).Wrap()
+		err = conf.NewAppError(conf.ErrBadRequest, err).Wrap()
 		return c.JSON(http.StatusOK, response.NewAPIResponse(conf.ErrBadRequest, err.Error(), nil))
 	}
 
@@ -112,12 +113,12 @@ func (h *authHandler) Login(c echo.Context) error {
 	if err != nil {
 		// zap.S().Errorw("create error", zap.Error(err))
 		code := conf.ErrFailedToServer
-		// if apperr, ok := errors.Cause(err).(*conf.AppError); ok {
-		// 	code = apperr.Code
-		// 	err = apperr.Wrap()
-		// } else {
-		// 	err = conf.NewAppError(conf.ErrFailedToServer, err).Wrap()
-		// }
+		if apperr, ok := errors.Cause(err).(*conf.AppError); ok {
+			code = apperr.Code
+			err = apperr.Wrap()
+		} else {
+			err = conf.NewAppError(conf.ErrFailedToServer, err).Wrap()
+		}
 		return c.JSON(http.StatusOK, response.NewAPIResponse(code, err.Error(), nil))
 	}
 
@@ -127,7 +128,7 @@ func (h *authHandler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.NewAPIResponse(0, response.StatusText(response.StatusSuccess), response.Jwt{Token: token}))
 }
 
-// makeToken トークン生成（TODO:実装場所検討。infrastructure？）
+// makeToken トークン生成（TODO:実装場所検討）
 func makeToken(userID uint) string {
 	// headerのセット
 	token := jwt.New(jwt.SigningMethodHS256)
