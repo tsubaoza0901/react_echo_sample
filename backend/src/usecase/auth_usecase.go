@@ -18,12 +18,12 @@ type AuthUseCase interface {
 // 役割：埋め込んだinterfaceに定義されたメソッドを自身の構造体のメソッドとして取得
 type authUseCase struct {
 	gateway.UserRepositoryAccess
-	transaction.ManageTransaction
+	gateway.ManageTransaction
 }
 
 // NewAuthUseCase NewAuthUseCase関数
 // 役割：authUseCaseのコンストラクタ関数
-func NewAuthUseCase(userra gateway.UserRepositoryAccess, mtx transaction.ManageTransaction) AuthUseCase {
+func NewAuthUseCase(userra gateway.UserRepositoryAccess, mtx gateway.ManageTransaction) AuthUseCase {
 	return &authUseCase{userra, mtx}
 }
 

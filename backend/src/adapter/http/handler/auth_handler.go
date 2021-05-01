@@ -76,7 +76,7 @@ func (h *authHandler) Signup(c echo.Context) error {
 		return c.JSON(http.StatusOK, response.NewAPIResponse(code, err.Error(), nil))
 	}
 
-	// ユーザー用トークン生成
+	// トークン生成
 	token := makeToken(userID)
 
 	return c.JSON(http.StatusOK, response.NewAPIResponse(0, response.StatusText(response.StatusSuccess), response.Jwt{Token: token}))
@@ -122,7 +122,7 @@ func (h *authHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusOK, response.NewAPIResponse(code, err.Error(), nil))
 	}
 
-	// ユーザー用トークン生成
+	// トークン生成
 	token := makeToken(userID)
 
 	return c.JSON(http.StatusOK, response.NewAPIResponse(0, response.StatusText(response.StatusSuccess), response.Jwt{Token: token}))

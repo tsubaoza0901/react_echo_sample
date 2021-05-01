@@ -4,7 +4,6 @@ import (
 	"react-echo-sample/adapter/gateway"
 	"react-echo-sample/adapter/http/handler"
 	"react-echo-sample/infrastructure/persistence/mysql"
-	"react-echo-sample/infrastructure/transaction"
 	"react-echo-sample/usecase"
 
 	"gorm.io/gorm"
@@ -42,7 +41,7 @@ func (i *interactor) NewAppHandler() handler.AppHandler {
 
 // NewAppRepository NewAppRepositoryメソッド
 // 役割：インスタンス生成
-func (i *interactor) NewAppRepository() transaction.ManageTransaction {
+func (i *interactor) NewAppRepository() gateway.ManageTransaction {
 	return mysql.NewAppRepository(i.Conn)
 }
 

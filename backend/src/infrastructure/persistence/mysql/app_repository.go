@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"react-echo-sample/infrastructure/transaction"
+	"react-echo-sample/adapter/gateway"
 
 	"gorm.io/gorm"
 )
@@ -11,7 +11,7 @@ type appRepository struct {
 }
 
 // NewAppRepository NewAppRepository関数
-func NewAppRepository(Conn *gorm.DB) transaction.ManageTransaction {
+func NewAppRepository(Conn *gorm.DB) gateway.ManageTransaction {
 	return &appRepository{Conn}
 }
 
